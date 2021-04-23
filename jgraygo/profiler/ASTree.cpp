@@ -251,11 +251,6 @@ std::string AST::getName() const {
 //
 void AST::mainHeader(const std::vector<std::string>& profileName) {
 
-    //NEED TO IMPLEMENT
-    //Skip down a couple lines or find main and put it before that.
-    //Add #include "profile.hpp"
-    //For each file profile name, add a new node with a profile 
-    //   declaration "profile foo_cpp("foo.cpp");"
     std::list<AST*>::iterator ptr = child.begin();
     while (ptr != child.end()) {
         if ((*ptr)->tag == "cpp:include") {
@@ -288,11 +283,27 @@ void AST::mainHeader(const std::vector<std::string>& profileName) {
 //
 void AST::fileHeader(const std::string& profileName) {
 
-    //NEED TO IMPLEMENT
-    //Skip down a couple lines or find first function and put it before that.
-    //Add #include "profile.hpp"
-    //Add in the external declaration for that file "extern profile foo_cpp;"
+    std::list<AST*>::iterator ptr = child.begin();
+    while (ptr != child.end()) {
+        if ((*ptr)->tag == "cpp:include") {
+            break;
+        }
+        ++ptr;
+    }
 
+    /////////////////////////////////////////////////////////////////////
+    // Create include directive
+    AST* cpp_include = new AST(token, "\n\n// Include header for profiling\n#include \"profile.hpp\"\n");
+    child.insert(++ptr, cpp_include);
+    /////////////////////////////////////////////////////////////////////
+    // Create profile declaration for each in profileName
+    std::string profName = profileName;
+    std::string profileDec = "extern profile " + profName + "(\"";
+    std::replace(profName.begin(), profName.end(), '_', '.');
+    profileDec += profName + "\")\n";
+    AST* profNode = new AST(token, profileDec);
+
+    child.insert(ptr, profNode);
 
 }
 
