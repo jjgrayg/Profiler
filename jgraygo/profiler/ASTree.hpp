@@ -97,9 +97,10 @@ public:
     friend  std::istream& operator>>(std::istream&, srcML&);
     friend  std::ostream& operator<<(std::ostream&, const srcML&); 
     
+    AST*         tree;
+    
 private:
     std::string  header;
-    AST*         tree;
 };
 
 
