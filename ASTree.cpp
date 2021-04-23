@@ -177,8 +177,6 @@ AST::AST(const AST& actual) {
 // Constant time swap for AST
 //
 void AST::swap(AST& b) {
-    //NEED TO IMPLEMENT
-    //Swap all the top level childern (pointers to AST)
 
     // Swap nodes
     nodes tempNode = b.nodeType;
