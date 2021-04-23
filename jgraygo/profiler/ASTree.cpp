@@ -256,6 +256,31 @@ void AST::mainHeader(const std::vector<std::string>& profileName) {
     //Add #include "profile.hpp"
     //For each file profile name, add a new node with a profile 
     //   declaration "profile foo_cpp("foo.cpp");"
+    std::list<AST*>::iterator ptr = child.begin();
+    while (ptr != child.end()) {
+        if ((*ptr)->tag == "cpp:include") {
+            std::cout << "Stopping";
+            break;
+        }
+        ++ptr;
+    }
+
+    /////////////////////////////////////////////////////////////////////
+    // Create include directive
+    AST* cpp_include = new AST(token, "\n\n// Include header for profiling\n#include \"profile.hpp\"\n");
+    child.insert(++ptr, cpp_include);
+    /////////////////////////////////////////////////////////////////////
+    // Create profile declaration for each in profileName
+    for (int i = 0; i < profileName.size(); ++i) {
+        std::string profName = profileName[i];
+        std::string profileDec = "profile " + profName + "(\"";
+        std::replace(profName.begin(), profName.end(), '_', '.');
+        profileDec += profName + "\")\n";
+        AST* profNode = new AST(token, profileDec);
+
+        child.insert(ptr, profNode);
+    }
+
 }
 
 

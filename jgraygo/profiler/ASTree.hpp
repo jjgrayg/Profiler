@@ -5,7 +5,7 @@
  *  Created by Jonathan Maletic
  *  Copyright 2021 Kent State University. All rights reserved.
  *  Spring 2021
- *  Modified by:
+ *  Modified by: Jarod Graygo
  *
  */
 
