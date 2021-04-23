@@ -259,7 +259,6 @@ void AST::mainHeader(const std::vector<std::string>& profileName) {
     std::list<AST*>::iterator ptr = child.begin();
     while (ptr != child.end()) {
         if ((*ptr)->tag == "cpp:include") {
-            std::cout << "Stopping";
             break;
         }
         ++ptr;
