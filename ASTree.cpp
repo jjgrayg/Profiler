@@ -5,7 +5,7 @@
  *  Created by Jonathan Maletic
  *  Copyright 2021 Kent State University. All rights reserved.
  *  Spring 2021
- *  Modified by:
+ *  Modified by: Jarod Graygo
  *
  */
 
@@ -132,8 +132,17 @@ AST::AST(nodes t, const std::string& s) {
 // Destructor for AST
 //
 AST::~AST() {
-    //NEED TO IMPLEMENT
-    //Recursively traverse tree and delete from bottom up
+
+    // Check if the AST has children
+    if (child.size() != 0) {
+
+        // If it does iterate over each one
+        for (std::list<AST*>::const_iterator i = child.begin(); i != child.end(); ++i) {
+
+            // Recursively call the destructor over each child
+            delete *i;
+        }
+    }
 }
 
 
@@ -141,10 +150,26 @@ AST::~AST() {
 // Copy Constructor for AST
 //
 AST::AST(const AST& actual) {
-    //NEED TO IMPLEMENT
-    //Recursively traverse actual and
-    //make a copy of each node putting it
-    //into this.
+
+    // Check if the AST has children
+    if (actual.child.size() != 0) {
+
+        // If it does iterate over each one
+        for (std::list<AST*>::const_iterator i = actual.child.begin(); i != actual.child.end(); ++i) {
+
+            // Recursively call the copy ctor
+            AST* temp = new AST(*(*i));
+
+            // Add each new AST to the list of children
+            child.push_back(temp);
+        }
+    }
+
+    // Copy over the elements from actual to this
+    text = actual.text;
+    nodeType = actual.nodeType;
+    tag = actual.tag;
+    closeTag = actual.closeTag;
 }
 
 
@@ -154,6 +179,29 @@ AST::AST(const AST& actual) {
 void AST::swap(AST& b) {
     //NEED TO IMPLEMENT
     //Swap all the top level childern (pointers to AST)
+
+    // Swap nodes
+    nodes tempNode = b.nodeType;
+    b.nodeType = nodeType;
+    nodeType = tempNode;
+
+    // Swap tags
+    std::string tempTag = b.tag;
+    b.tag = tag;
+    tag = tempTag;
+    tempTag = b.closeTag;
+    b.closeTag = closeTag;
+    closeTag = tempTag;
+
+    // Swap children
+    std::list<AST*> tempList = b.child;
+    b.child = child;
+    child = tempList;
+
+    // Swap text
+    std::string tempText = b.text;
+    b.text = text;
+    text = tempText;
 }
 
 /////////////////////////////////////////////////////////////////////
