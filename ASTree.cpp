@@ -252,27 +252,29 @@ std::string AST::getName() const {
 void AST::mainHeader(const std::vector<std::string>& profileName) {
 
     std::list<AST*>::iterator ptr = child.begin();
+    std::list<AST*>::iterator prevPtr;
     while (ptr != child.end()) {
-        if ((*ptr)->tag == "cpp:include") {
+        if ((*ptr)->tag == "function") {
             break;
         }
+        prevPtr = ptr;
         ++ptr;
     }
 
     /////////////////////////////////////////////////////////////////////
     // Create include directive
     AST* cpp_include = new AST(token, "\n\n// Include header for profiling\n#include \"profile.hpp\"\n");
-    child.insert(++ptr, cpp_include);
+    child.insert(prevPtr, cpp_include);
     /////////////////////////////////////////////////////////////////////
     // Create profile declaration for each in profileName
     for (int i = 0; i < profileName.size(); ++i) {
         std::string profName = profileName[i];
         std::string profileDec = "profile " + profName + "(\"";
         std::replace(profName.begin(), profName.end(), '_', '.');
-        profileDec += profName + "\")\n";
+        profileDec += profName + "\");\n";
         AST* profNode = new AST(token, profileDec);
 
-        child.insert(ptr, profNode);
+        child.insert(prevPtr, profNode);
     }
 
 }
@@ -284,26 +286,28 @@ void AST::mainHeader(const std::vector<std::string>& profileName) {
 void AST::fileHeader(const std::string& profileName) {
 
     std::list<AST*>::iterator ptr = child.begin();
+    std::list<AST*>::iterator prevPtr;
     while (ptr != child.end()) {
-        if ((*ptr)->tag == "cpp:include") {
+        if ((*ptr)->tag == "function") {
             break;
         }
+        prevPtr = ptr;
         ++ptr;
     }
 
     /////////////////////////////////////////////////////////////////////
     // Create include directive
     AST* cpp_include = new AST(token, "\n\n// Include header for profiling\n#include \"profile.hpp\"\n");
-    child.insert(++ptr, cpp_include);
+    child.insert(prevPtr, cpp_include);
     /////////////////////////////////////////////////////////////////////
     // Create profile declaration for each in profileName
     std::string profName = profileName;
     std::string profileDec = "extern profile " + profName + "(\"";
     std::replace(profName.begin(), profName.end(), '_', '.');
-    profileDec += profName + "\")\n";
+    profileDec += profName + "\");\n";
     AST* profNode = new AST(token, profileDec);
 
-    child.insert(ptr, profNode);
+    child.insert(prevPtr, profNode);
 
 }
 
@@ -320,7 +324,59 @@ void AST::mainReport(const std::vector<std::string>& profileName) {
     //Then start from the end() of this function and iterate
     // backwards until you find a return stmt.   You'll want
     // to insert the report statements before this return.
-    
+
+    std::list<AST*>::iterator ptr = child.begin();
+    std::list<AST*>::iterator innerFunctionPtr;
+    std::list<AST*>::iterator blockPtr;
+    AST* ptrToMain;
+    AST* ptrToReturn;
+    std::string profName;
+    std::string outStatement;
+
+    AST* outNode;
+
+    // Finds the function with name "main"
+    while (ptr != child.end()) {
+        if ((*ptr)->tag == "function") {
+            innerFunctionPtr = (*ptr)->child.begin();
+            while (innerFunctionPtr != (*ptr)->child.end()) {
+                if ((*innerFunctionPtr)->tag == "name") {
+                    if ((*((*innerFunctionPtr)->child.begin()))->text == "main") {
+                        ptrToMain = *ptr;
+                    }
+                }
+                ++innerFunctionPtr;
+            }
+        }
+        ++ptr;
+    }
+
+    // Finds the return call within "main"
+    ptr = ptrToMain->child.begin();
+    while (ptr != ptrToMain->child.end()) {
+        if ((*ptr)->tag == "block") {
+            blockPtr = (*ptr)->child.begin();
+            while (blockPtr != (*ptr)->child.end()) {
+                if ((*blockPtr)->tag == "return") {
+                    ptrToReturn = *blockPtr;
+                    break;
+                }
+                ++blockPtr;
+            }
+        }
+        if (ptrToReturn) break;
+        ++ptr;
+    }
+
+
+    for (int i = 0; i < profileName.size(); ++i) {
+        profName = profileName[i];
+        outStatement = "std::cout << " + profName + " << std::endl;\n\t";
+
+        outNode = new AST(token, outStatement);
+
+        child.insert(blockPtr, outNode);
+    }
     
 }
 
