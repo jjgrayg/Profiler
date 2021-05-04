@@ -245,7 +245,6 @@ std::string AST::getName() const {
     return result;
 }
 
-
 /////////////////////////////////////////////////////////////////////
 //  Adds in the includes and profile variables in a main file.
 //
@@ -267,10 +266,14 @@ void AST::mainHeader(const std::vector<std::string>& profileName) {
     child.insert(prevPtr, cpp_include);
     /////////////////////////////////////////////////////////////////////
     // Create profile declaration for each in profileName
-    for (int i = 0; i < profileName.size(); ++i) {
+    for (unsigned long i = 0; i < profileName.size(); ++i) {
         std::string profName = profileName[i];
         std::string profileDec = "profile " + profName + "(\"";
-        std::replace(profName.begin(), profName.end(), '_', '.');
+        unsigned int lastUnderscoreIndex = 0;
+        for (unsigned int j = 0; j < profName.size(); ++j) {
+            if (profName[j] == '_') lastUnderscoreIndex = j;
+        }
+        profName[lastUnderscoreIndex] = '.';
         profileDec += profName + "\");\n";
         AST* profNode = new AST(token, profileDec);
 
@@ -278,7 +281,6 @@ void AST::mainHeader(const std::vector<std::string>& profileName) {
     }
 
 }
-
 
 /////////////////////////////////////////////////////////////////////
 //  Adds in the includes and profile variables for non-main files
@@ -303,7 +305,11 @@ void AST::fileHeader(const std::string& profileName) {
     // Create profile declaration for each in profileName
     std::string profName = profileName;
     std::string profileDec = "extern profile " + profName + "(\"";
-    std::replace(profName.begin(), profName.end(), '_', '.');
+    int lastUnderscoreIndex = 0;
+    for (unsigned int i = 0; i < profName.size(); ++i) {
+        if (profName[i] == '_') lastUnderscoreIndex = i;
+    }
+    profName[lastUnderscoreIndex] = '.';
     profileDec += profName + "\");\n";
     AST* profNode = new AST(token, profileDec);
 
@@ -368,8 +374,7 @@ void AST::mainReport(const std::vector<std::string>& profileName) {
         ++ptr;
     }
 
-
-    for (int i = 0; i < profileName.size(); ++i) {
+    for (unsigned long i = 0; i < profileName.size(); ++i) {
         profName = profileName[i];
         outStatement = "std::cout << " + profName + " << std::endl;\n\t";
 
@@ -395,6 +400,42 @@ void AST::funcCount(const std::string& profileName) {
     //        Find block and insert count as first line in block
     //
 
+    std::list<AST*>::iterator ptr = child.begin();
+    std::list<AST*>::iterator nameFinder;
+    std::list<AST*>::iterator blockPtr;
+    std::string nameOfFunc;
+    std::string countStr;
+
+    // Find each function, constructor, and destructor
+    while (ptr != child.end()) {
+        if ((*ptr)->tag == "function" || (*ptr)->tag == "constructor" || (*ptr)->tag == "destructor") {
+            nameFinder = (*ptr)->child.begin();
+            while (nameFinder != (*ptr)->child.end()) {
+                if ((*nameFinder)->tag == "name") {
+                    nameOfFunc = (*nameFinder)->getName();
+                    break;
+                }
+                ++nameFinder;
+            }
+
+            blockPtr = (*ptr)->child.begin();
+            while (blockPtr != (*ptr)->child.end()) {
+                if ((*blockPtr)->tag == "block") {
+                    blockPtr = (*blockPtr)->child.begin();
+                    ++blockPtr;
+                    break;
+                }
+                ++blockPtr;
+            }
+            
+            countStr = " " + profileName + ".count(__LINE__, \"" + nameOfFunc + "\");";
+            AST* func = new AST(token, countStr);
+
+            child.insert(blockPtr, func);
+        }
+        ++ptr;
+    }
+
 }
 
 
@@ -409,8 +450,69 @@ void AST::lineCount(const std::string& profileName) {
     
     // Recursively check for expr_stmt within all blocks
     // The basis is when isStopTag is true.
+
+    std::list<AST*>::iterator ptr = child.begin();
+    std::list<AST*>::iterator blockPtr;
+    std::list<AST*>::iterator exprFinder;
+    std::string nameOfFunc;
+    std::string countStr;
+
+    std::vector<AST*> ptrs = deepScan("expr_stmt", ptrs);
+    for (unsigned long i = 0; i < ptrs.size(); ++i) {
+        std::cout << ptrs.size();
+        ptrs[i]->print(std::cout);
+    }
     
+    while (ptr != child.end()) {
+        if ((*ptr)->tag == "function" || (*ptr)->tag == "constructor" || (*ptr)->tag == "destructor") {
+            std::cout << "I'm in the first if" << std::endl;//
+            blockPtr = (*ptr)->child.begin();
+            while (blockPtr != (*ptr)->child.end()) {
+                std::cout << "I'm in the second while" << std::endl;//
+                if ((*blockPtr)->tag == "block") {
+                    std::cout << "I'm in the second if" << std::endl;//
+                    break;
+                }
+                ++blockPtr;
+            }
+            
+            countStr = " " + profileName + ".count(__LINE__);";
+            AST* func = new AST(token, countStr);
+
+            exprFinder = (*blockPtr)->child.begin();
+            while (exprFinder != (*blockPtr)->child.end()) {
+                std::cout << "I'm in the third while" << std::endl;//
+                if ((*exprFinder)->tag == "expr_stmt") {
+                    std::cout << "I'm in the third if" << std::endl;//
+                    child.insert(++exprFinder, func);
+                }
+                ++exprFinder;
+            }
+        }
+        ++ptr;
+    }
     
+} 
+
+std::vector<AST*>& AST::deepScan(std::string searchTag, std::vector<AST*>& vecToPopulate) {
+    std::vector<AST*> temp;
+    std::list<AST*>::iterator ptr = child.begin();
+    if (child.empty()){
+        return vecToPopulate;
+    }
+    while (ptr != child.end()) {
+        if (((*ptr)) && (*ptr)->tag == searchTag) {
+            (*ptr)->print(std::cerr);
+            vecToPopulate.push_back(*ptr);
+            return vecToPopulate;
+        }
+        temp = (*ptr)->deepScan(searchTag, vecToPopulate);
+        for (unsigned long i = 0; i < temp.size(); ++i) {
+            vecToPopulate.push_back(temp[i]);
+        }
+        ++ptr;
+    }
+    return vecToPopulate;
 }
 
 
