@@ -304,13 +304,7 @@ void AST::fileHeader(const std::string& profileName) {
     /////////////////////////////////////////////////////////////////////
     // Create profile declaration for each in profileName
     std::string profName = profileName;
-    std::string profileDec = "extern profile " + profName + "(\"";
-    int lastUnderscoreIndex = 0;
-    for (unsigned int i = 0; i < profName.size(); ++i) {
-        if (profName[i] == '_') lastUnderscoreIndex = i;
-    }
-    profName[lastUnderscoreIndex] = '.';
-    profileDec += profName + "\");\n";
+    std::string profileDec = "extern profile " + profName + ";\n";
     AST* profNode = new AST(token, profileDec);
 
     child.insert(prevPtr, profNode);
@@ -451,64 +445,26 @@ void AST::lineCount(const std::string& profileName) {
     // Recursively check for expr_stmt within all blocks
     // The basis is when isStopTag is true.
 
-    std::list<AST*>::iterator ptr = child.begin();
-    std::list<AST*>::iterator blockPtr;
-    std::list<AST*>::iterator exprFinder;
-    std::string nameOfFunc;
-    std::string countStr;
-
-    std::vector<AST*> ptrs = deepScan("expr_stmt", ptrs);
+    std::vector<std::list<AST*>::iterator> ptrs;
+    deepScan("expr_stmt", ptrs);
     for (unsigned long i = 0; i < ptrs.size(); ++i) {
-        std::cout << ptrs.size();
-        ptrs[i]->print(std::cout);
+        std::list<AST*>::iterator tempPtr = ptrs[i];
+        ++tempPtr;
+        std::string lineCountStr = " " + profileName + ".count(__LINE__);";
+        AST* linecount = new AST(token, lineCountStr);
+        child.insert(tempPtr, linecount);
     }
-    
-    while (ptr != child.end()) {
-        if ((*ptr)->tag == "function" || (*ptr)->tag == "constructor" || (*ptr)->tag == "destructor") {
-            std::cout << "I'm in the first if" << std::endl;//
-            blockPtr = (*ptr)->child.begin();
-            while (blockPtr != (*ptr)->child.end()) {
-                std::cout << "I'm in the second while" << std::endl;//
-                if ((*blockPtr)->tag == "block") {
-                    std::cout << "I'm in the second if" << std::endl;//
-                    break;
-                }
-                ++blockPtr;
-            }
-            
-            countStr = " " + profileName + ".count(__LINE__);";
-            AST* func = new AST(token, countStr);
-
-            exprFinder = (*blockPtr)->child.begin();
-            while (exprFinder != (*blockPtr)->child.end()) {
-                std::cout << "I'm in the third while" << std::endl;//
-                if ((*exprFinder)->tag == "expr_stmt") {
-                    std::cout << "I'm in the third if" << std::endl;//
-                    child.insert(++exprFinder, func);
-                }
-                ++exprFinder;
-            }
-        }
-        ++ptr;
-    }
-    
 } 
 
-std::vector<AST*>& AST::deepScan(std::string searchTag, std::vector<AST*>& vecToPopulate) {
-    std::vector<AST*> temp;
+std::vector<std::list<AST*>::iterator>& AST::deepScan(std::string searchTag, std::vector<std::list<AST*>::iterator>& vecToPopulate) {
     std::list<AST*>::iterator ptr = child.begin();
-    if (child.empty()){
+    if (isStopTag(tag)){
         return vecToPopulate;
     }
     while (ptr != child.end()) {
-        if (((*ptr)) && (*ptr)->tag == searchTag) {
-            (*ptr)->print(std::cerr);
-            vecToPopulate.push_back(*ptr);
-            return vecToPopulate;
-        }
-        temp = (*ptr)->deepScan(searchTag, vecToPopulate);
-        for (unsigned long i = 0; i < temp.size(); ++i) {
-            vecToPopulate.push_back(temp[i]);
+        (*ptr)->deepScan(searchTag, vecToPopulate);
+        if ((*ptr)->tag == searchTag) {
+            vecToPopulate.push_back(ptr);
         }
         ++ptr;
     }
@@ -592,8 +548,8 @@ bool isStopTag(std::string tag) {
     if (tag == "condition"            ) return true;
     if (tag == "cpp:include"          ) return true;
     if (tag == "macro"                ) return true;
-    if (tag == "comment type\"block\"") return true;
-    if (tag == "comment type\"line\"" ) return true;
+    if (tag == "comment type=\"block\"") return true;
+    if (tag == "comment type=\"line\"" ) return true;
     return false;
 }
 
