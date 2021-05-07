@@ -456,6 +456,11 @@ void AST::lineCount(const std::string& profileName) {
     }
 } 
 
+/////////////////////////////////////////////////////////////////////
+// Searches an AST and returns a vector of list iterators pointing
+// to the AST children that have a tag matching that specified
+// REQUIRES: A vector of list iterators (this is so that it is not
+//           returning a vector scoped to only this function)
 std::vector<std::list<AST*>::iterator>& AST::deepScan(std::string searchTag, std::vector<std::list<AST*>::iterator>& vecToPopulate) {
     std::list<AST*>::iterator ptr = child.begin();
     if (isStopTag(tag)){
