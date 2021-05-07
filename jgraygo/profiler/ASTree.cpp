@@ -439,7 +439,7 @@ void AST::lineCount(const std::string& profileName) {
         } 
         condition = (*condition)->child.begin();
         ++condition; 
-        std::string lineCountStr =  profileName + ".count(__LINE__, \"if stmt\")" + " , ";
+        std::string lineCountStr =  profileName + ".count(__LINE__, \"if condition\")" + " , ";
         AST* linecount = new AST(token, lineCountStr); 
         child.insert(condition, linecount); 
     } 

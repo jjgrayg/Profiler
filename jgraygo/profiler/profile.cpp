@@ -19,7 +19,7 @@ std::ostream& operator<< (std::ostream& out, const profile& p) {
     
     out << std::endl << "File: " << p.fname << std::endl;
     out << "<============================================>" << std::endl;
-    out << "Line Number/Function Name\tTimes Called" << std::endl;
+    out << "Line Number/Name\t\tTimes Called" << std::endl;
     for(std::map<std::string, int>::const_iterator i = p.stmt.begin(); i != p.stmt.end(); ++i) {
         out << i->first;
         if (i->first.length() > 7 && i->first.length() <= 15) out << "\t\t\t";
