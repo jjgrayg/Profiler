@@ -251,19 +251,17 @@ std::string AST::getName() const {
 void AST::mainHeader(const std::vector<std::string>& profileName) {
 
     std::list<AST*>::iterator ptr = child.begin();
-    std::list<AST*>::iterator prevPtr;
     while (ptr != child.end()) {
         if ((*ptr)->tag == "function") {
             break;
         }
-        prevPtr = ptr;
         ++ptr;
     }
 
     /////////////////////////////////////////////////////////////////////
     // Create include directive
     AST* cpp_include = new AST(token, "\n\n// Include header for profiling\n#include \"profile.hpp\"\n");
-    child.insert(prevPtr, cpp_include);
+    child.insert(ptr, cpp_include);
     /////////////////////////////////////////////////////////////////////
     // Create profile declaration for each in profileName
     for (unsigned long i = 0; i < profileName.size(); ++i) {
@@ -275,9 +273,10 @@ void AST::mainHeader(const std::vector<std::string>& profileName) {
         }
         profName[lastUnderscoreIndex] = '.';
         profileDec += profName + "\");\n";
+        if (i == profileName.size() - 1) profileDec += "\n\n";
         AST* profNode = new AST(token, profileDec);
 
-        child.insert(prevPtr, profNode);
+        child.insert(ptr, profNode);
     }
 
 }
@@ -366,8 +365,10 @@ void AST::mainReport(const std::vector<std::string>& profileName) {
         outStatement = "std::cout << " + profName + " << std::endl;\n\t";
 
         outNode = new AST(token, outStatement);
+        std::cerr << "I worked okay\n";
 
         child.insert(blockPtr, outNode);
+        std::cerr << "I worked okay\n";
     }
     
 }
@@ -425,11 +426,78 @@ void AST::funcCount(const std::string& profileName) {
 //
 void AST::lineCount(const std::string& profileName) {
     std::vector<std::list<AST*>::iterator> ptrs;
+    std::vector<std::list<AST*>::iterator> ifs;
+    std::vector<std::list<AST*>::iterator> whiles;
+    std::vector<std::list<AST*>::iterator> fors;
+    std::vector<std::list<AST*>::iterator> switches;
     deepScan("expr_stmt", ptrs);
+    deepScan("if", ifs);
+    deepScan("while", whiles);
+    deepScan("for", fors);
+    deepScan("case", switches);
+
     for (unsigned long i = 0; i < ptrs.size(); ++i) {
         std::list<AST*>::iterator tempPtr = ptrs[i];
         ++tempPtr;
         std::string lineCountStr = " " + profileName + ".count(__LINE__);";
+        AST* linecount = new AST(token, lineCountStr);
+        child.insert(tempPtr, linecount);
+    }
+
+    for (unsigned long i = 0; i < ifs.size(); ++i) {
+        std::list<AST*>::iterator tempPtr = ifs[i];
+        tempPtr = (*tempPtr)->child.begin();
+        std::list<AST*>::iterator condition = tempPtr;
+        // while (condition != child.end()) {
+        //     if ((*condition)->tag == "condition") break;
+        //     ++condition;
+        // }
+        // // condition = (*condition)->child.end();
+        // // --condition;
+        // ++condition;
+        std::string lineCountStr = " && " + profileName + ".count(__LINE__, \"if stmt\");";
+        AST* linecount = new AST(token, lineCountStr);
+        child.insert(condition, linecount);
+    }
+
+    for (unsigned long i = 0; i < whiles.size(); ++i) {
+        std::list<AST*>::iterator tempPtr = whiles[i];
+        tempPtr = (*tempPtr)->child.begin();
+        while (tempPtr != child.end()) {
+            if ((*tempPtr)->tag == "block") break;
+            ++tempPtr;
+        }
+        tempPtr = (*tempPtr)->child.begin();
+        tempPtr++;
+        std::string lineCountStr = " " + profileName + ".count(__LINE__, \"while condition\"); ";
+        AST* linecount = new AST(token, lineCountStr);
+        child.insert(tempPtr, linecount);
+    }
+
+    for (unsigned long i = 0; i < fors.size(); ++i) {
+        std::list<AST*>::iterator tempPtr = fors[i];
+        tempPtr = (*tempPtr)->child.begin();
+        while (tempPtr != child.end()) {
+            if ((*tempPtr)->tag == "block") break;
+            ++tempPtr;
+        }
+        tempPtr = (*tempPtr)->child.begin();
+        tempPtr++;
+        std::string lineCountStr = " " + profileName + ".count(__LINE__, \"for condition\"); ";
+        AST* linecount = new AST(token, lineCountStr);
+        child.insert(tempPtr, linecount);
+    }
+
+    for (unsigned long i = 0; i < switches.size(); ++i) {
+        std::list<AST*>::iterator tempPtr = switches[i];
+        tempPtr = (*tempPtr)->child.begin();
+        while (tempPtr != child.end()) {
+            if ((*tempPtr)->tag == "block") break;
+            ++tempPtr;
+        }
+        tempPtr = (*tempPtr)->child.begin();
+        tempPtr++;
+        std::string lineCountStr = " " + profileName + ".count(__LINE__, \"case\"); ";
         AST* linecount = new AST(token, lineCountStr);
         child.insert(tempPtr, linecount);
     }
@@ -440,6 +508,7 @@ void AST::lineCount(const std::string& profileName) {
 // to the AST children that have a tag matching that specified
 // REQUIRES: A vector of list iterators (this is so that it is not
 //           returning a vector scoped to only this function)
+//
 std::vector<std::list<AST*>::iterator>& AST::deepScan(std::string searchTag, std::vector<std::list<AST*>::iterator>& vecToPopulate) {
     std::list<AST*>::iterator ptr = child.begin();
     if (isStopTag(tag)){
