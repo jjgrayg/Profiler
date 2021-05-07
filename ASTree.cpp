@@ -317,13 +317,6 @@ void AST::fileHeader(const std::string& profileName) {
 // Assumes only one return at end of main body.
 //
 void AST::mainReport(const std::vector<std::string>& profileName) {
-    
-    //NEED TO IMPLEMENT
-    
-    //Find the main - function with name of "main"
-    //Then start from the end() of this function and iterate
-    // backwards until you find a return stmt.   You'll want
-    // to insert the report statements before this return.
 
     std::list<AST*>::iterator ptr = child.begin();
     std::list<AST*>::iterator innerFunctionPtr;
@@ -385,14 +378,6 @@ void AST::mainReport(const std::vector<std::string>& profileName) {
 //  Assumes no nested functions.
 //
 void AST::funcCount(const std::string& profileName) {
-    
-    //NEED TO IMPLEMENT
-    
-    // for all children
-    //     if child is a function, constructor, destructor
-    //        Find the function name (use AST::getName())
-    //        Find block and insert count as first line in block
-    //
 
     std::list<AST*>::iterator ptr = child.begin();
     std::list<AST*>::iterator nameFinder;
@@ -439,12 +424,6 @@ void AST::funcCount(const std::string& profileName) {
 //   Assumes all construts (for, while, if) have { }.
 //
 void AST::lineCount(const std::string& profileName) {
-    
-    //NEED TO IMPLEMENT
-    
-    // Recursively check for expr_stmt within all blocks
-    // The basis is when isStopTag is true.
-
     std::vector<std::list<AST*>::iterator> ptrs;
     deepScan("expr_stmt", ptrs);
     for (unsigned long i = 0; i < ptrs.size(); ++i) {
