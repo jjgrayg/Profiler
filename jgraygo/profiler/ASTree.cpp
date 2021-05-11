@@ -431,14 +431,14 @@ void AST::lineCount(const std::string& profileName) {
 
     for (unsigned long i = 0; i < ifs.size(); ++i) { 
         std::list<AST*>::iterator condition = getCondition(ifs[i]);
-        std::string lineCountStr =  profileName + ".count(__LINE__, \"if condition\")" + " , ";
+        std::string lineCountStr =  profileName + ".count(__LINE__, \"if condition\")" + ", ";
         AST* linecount = new AST(token, lineCountStr); 
         child.insert(condition, linecount); 
     } 
     
     for (unsigned long i = 0; i < whiles.size(); ++i) { 
         std::list<AST*>::iterator condition = getCondition(whiles[i]);
-        std::string lineCountStr =  profileName + ".count(__LINE__, \"while condition\")" + " , ";
+        std::string lineCountStr =  profileName + ".count(__LINE__, \"while condition\")" + ", ";
         AST* linecount = new AST(token, lineCountStr); 
         child.insert(condition, linecount); 
     } 
@@ -446,14 +446,14 @@ void AST::lineCount(const std::string& profileName) {
     for (unsigned long i = 0; i < fors.size(); ++i) { 
         std::list<AST*>::iterator condition = getCondition(fors[i]);
         --condition;
-        std::string lineCountStr =  profileName + ".count(__LINE__, \"for condition\")" + " , ";
+        std::string lineCountStr =  profileName + ".count(__LINE__, \"for condition\")" + ", ";
         AST* linecount = new AST(token, lineCountStr); 
         child.insert(condition, linecount); 
     }
     
     for (unsigned long i = 0; i < switches.size(); ++i) { 
         std::list<AST*>::iterator condition = getCondition(switches[i]);
-        std::string lineCountStr =  profileName + ".count(__LINE__, \"case condition\")" + " , ";
+        std::string lineCountStr =  profileName + ".count(__LINE__, \"case condition\")" + ", ";
         AST* linecount = new AST(token, lineCountStr); 
         child.insert(condition, linecount);
     }
