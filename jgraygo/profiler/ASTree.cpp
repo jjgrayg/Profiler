@@ -430,59 +430,29 @@ void AST::lineCount(const std::string& profileName) {
     } 
 
     for (unsigned long i = 0; i < ifs.size(); ++i) { 
-        std::list<AST*>::iterator tempPtr = ifs[i]; 
-        tempPtr = (*tempPtr)->child.begin(); 
-        std::list<AST*>::iterator condition = tempPtr; 
-        while (condition != child.end()) { 
-            if ((*condition)->tag == "condition") break; 
-            ++condition; 
-        } 
-        condition = (*condition)->child.begin();
-        ++condition; 
+        std::list<AST*>::iterator condition = getCondition(ifs[i]);
         std::string lineCountStr =  profileName + ".count(__LINE__, \"if condition\")" + " , ";
         AST* linecount = new AST(token, lineCountStr); 
         child.insert(condition, linecount); 
     } 
     
     for (unsigned long i = 0; i < whiles.size(); ++i) { 
-        std::list<AST*>::iterator tempPtr = whiles[i]; 
-        tempPtr = (*tempPtr)->child.begin(); 
-        std::list<AST*>::iterator condition = tempPtr; 
-        while (condition != child.end()) { 
-            if ((*condition)->tag == "condition") break; 
-            ++condition; 
-        } 
-        condition = (*condition)->child.begin();
-        ++condition; 
+        std::list<AST*>::iterator condition = getCondition(whiles[i]);
         std::string lineCountStr =  profileName + ".count(__LINE__, \"while condition\")" + " , ";
         AST* linecount = new AST(token, lineCountStr); 
         child.insert(condition, linecount); 
     } 
     
     for (unsigned long i = 0; i < fors.size(); ++i) { 
-        std::list<AST*>::iterator tempPtr = fors[i]; 
-        tempPtr = (*tempPtr)->child.begin(); 
-        std::list<AST*>::iterator condition = tempPtr; 
-        while (condition != child.end()) { 
-            if ((*condition)->tag == "condition") break; 
-            ++condition; 
-        } 
-        condition = (*condition)->child.begin();
+        std::list<AST*>::iterator condition = getCondition(fors[i]);
+        --condition;
         std::string lineCountStr =  profileName + ".count(__LINE__, \"for condition\")" + " , ";
         AST* linecount = new AST(token, lineCountStr); 
         child.insert(condition, linecount); 
     }
     
     for (unsigned long i = 0; i < switches.size(); ++i) { 
-        std::list<AST*>::iterator tempPtr = switches[i]; 
-        tempPtr = (*tempPtr)->child.begin(); 
-        std::list<AST*>::iterator condition = tempPtr; 
-        while (condition != child.end()) { 
-            if ((*condition)->tag == "condition") break; 
-            ++condition; 
-        } 
-        condition = (*condition)->child.begin();
-        ++condition; 
+        std::list<AST*>::iterator condition = getCondition(switches[i]);
         std::string lineCountStr =  profileName + ".count(__LINE__, \"case condition\")" + " , ";
         AST* linecount = new AST(token, lineCountStr); 
         child.insert(condition, linecount);
@@ -508,6 +478,21 @@ std::vector<std::list<AST*>::iterator>& AST::deepScan(std::string searchTag, std
         ++ptr;
     }
     return vecToPopulate;
+}
+
+/////////////////////////////////////////////////////////////////////
+// Finds the condition within a conditional statement
+// REQUIRES: an iterator pointing at a conditional statement
+//
+std::list<AST*>::iterator& AST::getCondition(std::list<AST*>::iterator& ptr) { 
+    ptr = (*ptr)->child.begin(); 
+    while (ptr != child.end()) { 
+        if ((*ptr)->tag == "condition") break; 
+        ++ptr; 
+    } 
+    ptr = (*ptr)->child.begin();
+    ++ptr;
+    return ptr;
 }
 
 
