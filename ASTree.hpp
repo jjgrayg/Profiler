@@ -67,6 +67,7 @@ public:
     std::ostream& print     (std::ostream&) const;
     std::istream& read      (std::istream&);
     std::vector<std::list<AST*>::iterator>& deepScan(std::string, std::vector<std::list<AST*>::iterator>&);
+    std::list<AST*>::iterator& getCondition(std::list<AST*>::iterator&);
     
 private:
     nodes               nodeType;       //Category, Token, or Whitespace
