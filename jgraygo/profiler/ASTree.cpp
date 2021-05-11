@@ -410,19 +410,19 @@ void AST::funcCount(const std::string& profileName) {
 //   Assumes all construts (for, while, if) have { }.
 //
 void AST::lineCount(const std::string& profileName) {
-    std::vector<std::list<AST*>::iterator> ptrs; 
+    std::vector<std::list<AST*>::iterator> expressions; 
     std::vector<std::list<AST*>::iterator> ifs; 
     std::vector<std::list<AST*>::iterator> whiles; 
     std::vector<std::list<AST*>::iterator> fors; 
     std::vector<std::list<AST*>::iterator> switches; 
-    deepScan("expr_stmt", ptrs); 
+    deepScan("expr_stmt", expressions); 
     deepScan("if", ifs); 
     deepScan("while", whiles); 
     deepScan("for", fors); 
     deepScan("switch", switches); 
 
-    for (unsigned long i = 0; i < ptrs.size(); ++i) { 
-        std::list<AST*>::iterator tempPtr = ptrs[i]; 
+    for (unsigned long i = 0; i < expressions.size(); ++i) { 
+        std::list<AST*>::iterator tempPtr = expressions[i]; 
         ++tempPtr;
         std::string lineCountStr = " " + profileName + ".count(__LINE__);"; 
         AST* linecount = new AST(token, lineCountStr); 
@@ -475,16 +475,17 @@ void AST::lineCount(const std::string& profileName) {
     
     for (unsigned long i = 0; i < switches.size(); ++i) { 
         std::list<AST*>::iterator tempPtr = switches[i]; 
-        std::vector<std::list<AST*>::iterator> caseBlocks;
-        (*tempPtr)->deepScan("block", caseBlocks);
-        for (unsigned long j = 0; j < caseBlocks.size(); ++j) {
-            tempPtr = caseBlocks[j];
-            tempPtr = (*tempPtr)->child.begin();
-            ++tempPtr;
-            std::string lineCountStr = profileName + ".count(__LINE__, \"case condition\"); "; 
-            AST* linecount = new AST(token, lineCountStr); 
-            child.insert(tempPtr, linecount); 
-        }
+        tempPtr = (*tempPtr)->child.begin(); 
+        std::list<AST*>::iterator condition = tempPtr; 
+        while (condition != child.end()) { 
+            if ((*condition)->tag == "condition") break; 
+            ++condition; 
+        } 
+        condition = (*condition)->child.begin();
+        ++condition; 
+        std::string lineCountStr =  profileName + ".count(__LINE__, \"case condition\")" + " , ";
+        AST* linecount = new AST(token, lineCountStr); 
+        child.insert(condition, linecount);
     }
 } 
 
